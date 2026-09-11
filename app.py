@@ -415,7 +415,7 @@ else:
 
     # Display data table
     st.dataframe(
-        df_history[["Timestamp", "Category", "Priority", "Priority Score", "Automated Routing", "Suggested Action", "Processing Time (s)"]],
+        df_history[["Timestamp", "Category", "Priority", "priority_score", "Automated Routing", "Suggested Action", "Processing Time (s)"]],
         use_container_width=True,
         hide_index=True
     )
