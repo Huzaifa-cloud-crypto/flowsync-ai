@@ -1,0 +1,9 @@
+# FlowSync AI - Intelligent Document Triage & Workflow Automation Agent
+# Core Production Dependencies for Python & Streamlit Hackathon Build
+
+streamlit>=1.38.0
+google-genai>=0.1.1
+pydantic>=2.8.0
+pandas>=2.2.0
+pypdf>=4.3.0
+python-dotenv>=1.0.1
