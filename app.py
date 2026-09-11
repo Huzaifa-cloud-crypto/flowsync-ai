@@ -31,7 +31,6 @@ st.set_page_config(
 # Custom CSS styling for metric cards, tags, and status indicators
 st.markdown("""
 <style>
-    /* Metric Card Styling */
     .metric-container {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -207,21 +206,18 @@ col_input_left, col_input_right = st.columns([3, 2], gap="large")
 with col_input_left:
     st.subheader("📄 1. Ingest Unstructured Document")
 
-    # Sample Document Selector
     selected_preset_name = st.selectbox(
         "Or load an operational scenario:",
         list(DEMO_PRESETS.keys()),
         index=0
     )
 
-    # File Uploader
     uploaded_file = st.file_uploader(
         "Upload support ticket, email, appeal, or invoice (.txt or .pdf)",
         type=["txt", "pdf", "log", "md"],
         help="Supports standard plain text and Adobe PDF documents."
     )
 
-    # Determine default content for the text area
     initial_text = ""
     if uploaded_file is not None:
         try:
@@ -232,15 +228,13 @@ with col_input_left:
     elif selected_preset_name != "Select a pre-loaded operational document...":
         initial_text = DEMO_PRESETS[selected_preset_name]
 
-    # Manual or reviewed text editor
     document_text = st.text_area(
-        "Document Raw Text Content:",
+        "Document Text Content:",
         value=initial_text,
         height=220,
         placeholder="Paste customer emails, legal notices, error transcripts, or support tickets here..."
     )
 
-    # Trigger action button
     triage_clicked = st.button("🚀 Run FlowSync AI Triage Agent", type="primary", use_container_width=True)
 
 with col_input_right:
@@ -281,38 +275,35 @@ if triage_clicked:
             source = result_payload.get("source", "Gemini Intelligence")
             notice = result_payload.get("notice", "")
 
-            # Log to session history with both key conventions for compatibility
+            # Properly indented history logging
             history_entry = {
-           "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-           "Category": triage_data.get("category", "General Operations"),
-           "Priority": triage_data.get("priority", "Medium"),
-           "Priority Score": triage_data.get("priority_score", 50),
-           "priority_score": triage_data.get("priority_score", 50),
-            "Sentiment": triage_data.get("sentiment", "Neutral"),
-           "Suggested Action": triage_data.get("suggested_action", "Review document"),
-           "Routing Destination": triage_data.get("automated_routing", "Operations"),
-            "Workflow Trigger": triage_data.get("workflow_trigger", "Ticket Creation"),
-            "Summary": triage_data.get("summary", ""),
-            "Processing Time (s)": elapsed_time,
-             "Source": source
- }
-st.session_state["triage_history"].insert(0, history_entry)
+                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "Category": triage_data.get("category", "General Operations"),
+                "Priority": triage_data.get("priority", "Medium"),
+                "Priority Score": triage_data.get("priority_score", 50),
+                "priority_score": triage_data.get("priority_score", 50),
+                "Sentiment": triage_data.get("sentiment", "Neutral"),
+                "Suggested Action": triage_data.get("suggested_action", "Review document"),
+                "Routing Destination": triage_data.get("automated_routing", "Operations"),
+                "Workflow Trigger": triage_data.get("workflow_trigger", "Ticket Creation"),
+                "Summary": triage_data.get("summary", ""),
+                "Processing Time (s)": elapsed_time,
+                "Source": source
+            }
+            st.session_state["triage_history"].insert(0, history_entry)
 
             st.markdown("---")
             st.subheader("🎯 Triage Assessment Results")
             if notice:
                 st.caption(f"ℹ️ {notice}")
 
-            # Metric Cards Row
             m_col1, m_col2, m_col3, m_col4 = st.columns(4)
 
-            # Category
             with m_col1:
                 st.markdown("**Category / Intent**")
                 st.markdown(f"### {triage_data['category']}")
                 st.caption(f"Sentiment: {triage_data['sentiment']}")
 
-            # Priority Badge
             with m_col2:
                 st.markdown("**Priority Tier**")
                 priority = triage_data["priority"]
@@ -320,19 +311,16 @@ st.session_state["triage_history"].insert(0, history_entry)
                 st.markdown(f"### <span class='{badge_class}'>{priority.upper()} PRIORITY</span>", unsafe_allow_html=True)
                 st.caption(f"Urgency Confidence: {triage_data['priority_score']}/100")
 
-            # Routing Destination
             with m_col3:
                 st.markdown("**Automated Routing**")
                 st.markdown(f"### {triage_data['automated_routing']}")
                 st.caption("Assigned Department Queue")
 
-            # Latency / SLA
             with m_col4:
                 st.markdown("**Processing Latency**")
                 st.markdown(f"### {elapsed_time}s")
                 st.caption(f"Engine: {source}")
 
-            # Executive Summary & Action Callout
             st.markdown("#### 📝 Executive Summary")
             st.write(triage_data["summary"])
 
@@ -347,11 +335,9 @@ st.session_state["triage_history"].insert(0, history_entry)
                 unsafe_allow_html=True
             )
 
-            # Priority Rationale
             with st.expander("🔍 Priority Rationale & Explainability"):
                 st.write(triage_data["priority_rationale"])
 
-            # Extracted Entities Grid
             st.markdown("#### 🏷️ Extracted Structured Entities")
             entities = triage_data.get("key_entities", {})
 
@@ -414,13 +400,11 @@ if not st.session_state["triage_history"]:
 else:
     df_history = pd.DataFrame(st.session_state["triage_history"])
 
-    # Ensure column compatibility between 'Priority Score' and 'priority_score'
     if "Priority Score" not in df_history.columns and "priority_score" in df_history.columns:
         df_history["Priority Score"] = df_history["priority_score"]
     elif "priority_score" not in df_history.columns and "Priority Score" in df_history.columns:
         df_history["priority_score"] = df_history["Priority Score"]
 
-    # Safe column filtering to guarantee no KeyError regardless of pandas version
     candidate_cols = [
         "Timestamp", "Category", "Priority", "Priority Score",
         "Automated Routing", "Suggested Action", "Processing Time (s)"
@@ -429,14 +413,12 @@ else:
     if not display_cols:
         display_cols = list(df_history.columns)
 
-    # Display data table
     st.dataframe(
         df_history[display_cols],
         use_container_width=True,
         hide_index=True
     )
 
-    # Export options
     c_exp1, c_exp2, c_exp3 = st.columns([1, 1, 2])
     
     with c_exp1:
