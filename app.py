@@ -281,21 +281,22 @@ if triage_clicked:
             source = result_payload.get("source", "Gemini Intelligence")
             notice = result_payload.get("notice", "")
 
-            # Log to session history
+            # Log to session history with both key conventions for compatibility
             history_entry = {
-                "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Category": triage_data["category"],
-                "Priority": triage_data["priority"],
-                "Priority Score": triage_data["priority_score"],
-                "Sentiment": triage_data["sentiment"],
-                "Suggested Action": triage_data["suggested_action"],
-                "Routing Destination": triage_data["automated_routing"],
-                "Workflow Trigger": triage_data["workflow_trigger"],
-                "Summary": triage_data["summary"],
-                "Processing Time (s)": elapsed_time,
-                "Source": source
-            }
-            st.session_state["triage_history"].insert(0, history_entry)
+           "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+           "Category": triage_data.get("category", "General Operations"),
+           "Priority": triage_data.get("priority", "Medium"),
+           "Priority Score": triage_data.get("priority_score", 50),
+           "priority_score": triage_data.get("priority_score", 50),
+            "Sentiment": triage_data.get("sentiment", "Neutral"),
+           "Suggested Action": triage_data.get("suggested_action", "Review document"),
+           "Routing Destination": triage_data.get("automated_routing", "Operations"),
+            "Workflow Trigger": triage_data.get("workflow_trigger", "Ticket Creation"),
+            "Summary": triage_data.get("summary", ""),
+            "Processing Time (s)": elapsed_time,
+             "Source": source
+ }
+st.session_state["triage_history"].insert(0, history_entry)
 
             st.markdown("---")
             st.subheader("🎯 Triage Assessment Results")
@@ -413,9 +414,24 @@ if not st.session_state["triage_history"]:
 else:
     df_history = pd.DataFrame(st.session_state["triage_history"])
 
+    # Ensure column compatibility between 'Priority Score' and 'priority_score'
+    if "Priority Score" not in df_history.columns and "priority_score" in df_history.columns:
+        df_history["Priority Score"] = df_history["priority_score"]
+    elif "priority_score" not in df_history.columns and "Priority Score" in df_history.columns:
+        df_history["priority_score"] = df_history["Priority Score"]
+
+    # Safe column filtering to guarantee no KeyError regardless of pandas version
+    candidate_cols = [
+        "Timestamp", "Category", "Priority", "Priority Score",
+        "Automated Routing", "Suggested Action", "Processing Time (s)"
+    ]
+    display_cols = [c for c in candidate_cols if c in df_history.columns]
+    if not display_cols:
+        display_cols = list(df_history.columns)
+
     # Display data table
     st.dataframe(
-        df_history[["Timestamp", "Category", "Priority", "priority_score", "Automated Routing", "Suggested Action", "Processing Time (s)"]],
+        df_history[display_cols],
         use_container_width=True,
         hide_index=True
     )
